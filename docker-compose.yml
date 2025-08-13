@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  pdf-copilot:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8501:8501"  # Streamlit
+      - "8000:8000"  # FastAPI
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src
+    environment:
+      - LLM_PROVIDER=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chroma_db
+      - UPLOAD_DIR=/app/data/uploads
+      - DEBUG=false
+    depends_on:
+      - ollama
+    networks:
+      - pdf-copilot-network
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_ORIGINS=*
+    networks:
+      - pdf-copilot-network
+
+  # Opcional: ChromaDB standalone
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.basic_authn.BasicAuthenticationServerProvider
+    networks:
+      - pdf-copilot-network
+
+volumes:
+  ollama_data:
+  chroma_data:
+
+networks:
+  pdf-copilot-network:
+    driver: bridge
