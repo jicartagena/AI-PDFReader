@@ -5,10 +5,13 @@ Aplicación Streamlit para PDF Copilot
 import streamlit as st
 import asyncio
 import uuid
+import logging
 from typing import List, Dict, Any
 import os
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Añadir el directorio src al path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -30,7 +33,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# CSS personalizado
+# CSS personalizado que se adapta a temas claro y oscuro
 st.markdown(
     """
 <style>
@@ -48,17 +51,17 @@ st.markdown(
 }
 
 .status-success {
-    background-color: #d1fae5;
+    background-color: rgba(16, 185, 129, 0.1);
     border-left: 4px solid #10b981;
 }
 
 .status-error {
-    background-color: #fee2e2;
+    background-color: rgba(239, 68, 68, 0.1);
     border-left: 4px solid #ef4444;
 }
 
 .status-warning {
-    background-color: #fef3c7;
+    background-color: rgba(245, 158, 11, 0.1);
     border-left: 4px solid #f59e0b;
 }
 
@@ -66,26 +69,68 @@ st.markdown(
     padding: 1rem;
     border-radius: 0.5rem;
     margin: 0.5rem 0;
+    color: inherit; /* Hereda el color del tema actual */
 }
 
 .chat-user {
-    background-color: #eff6ff;
+    background-color: rgba(59, 130, 246, 0.1);
     border-left: 4px solid #3b82f6;
 }
 
 .chat-assistant {
-    background-color: #f0fdf4;
+    background-color: rgba(34, 197, 94, 0.1);
     border-left: 4px solid #22c55e;
 }
 
 .metric-card {
-    background-color: #f8fafc;
+    background-color: var(--background-color);
     padding: 1rem;
     border-radius: 0.5rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
 }
-</style>
-""",
+
+/* Adaptación automática para tema oscuro */
+@media (prefers-color-scheme: dark) {
+    .status-success {
+        background-color: rgba(16, 185, 129, 0.2);
+    }
+    
+    .status-error {
+        background-color: rgba(239, 68, 68, 0.2);
+    }
+    
+    .status-warning {
+        background-color: rgba(245, 158, 11, 0.2);
+    }
+    
+    .chat-user {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
+    
+    .chat-assistant {
+        background-color: rgba(34, 197, 94, 0.2);
+    }
+}
+
+/* Forzar colores específicos para Streamlit en modo oscuro */
+[data-testid="stApp"][data-baseweb-theme="dark"] .chat-message {
+    color: #ffffff !important;
+}
+
+[data-testid="stApp"][data-baseweb-theme="light"] .chat-message {
+    color: #000000 !important;
+}
+
+/* Asegurar que el texto sea legible en ambos temas */
+[data-testid="stApp"] .chat-message strong {
+    color: inherit;
+}
+
+[data-testid="stApp"] .chat-message small {
+    color: inherit;
+    opacity: 0.8;
+}
+</style>""",
     unsafe_allow_html=True,
 )
 
@@ -149,10 +194,23 @@ async def process_user_query(query: str):
     """Procesar consulta del usuario"""
     try:
         result = await orchestrator.process_user_query(query)
+
+        # Validar que la respuesta tenga la estructura esperada
+        if not isinstance(result, dict):
+            return {
+                "success": False,
+                "error": f"Respuesta inválida del orchestrator: {type(result)}",
+                "message": "Error interno de la aplicación",
+            }
+
         return result
     except Exception as e:
-        st.error(f"❌ Error procesando consulta: {str(e)}")
-        return None
+        logger.error(f"Error en process_user_query: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Error procesando la consulta",
+        }
 
 
 def display_system_status():
@@ -258,10 +316,14 @@ def display_conversation_history():
         )
 
         # Respuesta del asistente
-        if response and response.get("success"):
+        if response and isinstance(response, dict) and response.get("success"):
             content = response.get("response", "Sin respuesta")
             sources = response.get("sources", [])
             intent = response.get("intent", "general")
+
+            # Validar que sources sea una lista
+            if not isinstance(sources, list):
+                sources = []
 
             sources_text = (
                 f"<br><small>📚 Fuentes: {', '.join(sources)}</small>"

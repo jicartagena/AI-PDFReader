@@ -41,7 +41,7 @@ class EmbeddingsManager:
             return
 
         try:
-            # Configurar para usar solo archivos locales (sin acceso a HuggingFace Hub)
+            # Configurar para usar solo archivos locales
             import os
 
             os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -154,7 +154,7 @@ class VectorStore:
 
     def similarity_search(
         self, query: str, k: int = 5, filters: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+        ) -> List[Dict[str, Any]]:
         """Búsqueda por similitud"""
         if not self.collection or not self.embeddings_manager.is_available():
             logger.error("Vector store no disponible")

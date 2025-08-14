@@ -14,12 +14,8 @@ if [ "$LLM_PROVIDER" = "ollama" ]; then
     echo "✅ Ollama está disponible"
 fi
 
-# Iniciar aplicaciones en paralelo
+# Iniciar Streamlit
 echo "🎯 Iniciando Streamlit en puerto 8501..."
-streamlit run src/ui/streamlit_app.py --server.port=8501 --server.address=0.0.0.0 &
-
-echo "🎯 Iniciando FastAPI en puerto 8000..."
-uvicorn src.api.fastapi_app:app --host 0.0.0.0 --port 8000 &
-
-# Mantener el contenedor activo
-wait
+cd /app
+export PYTHONPATH="/app/src"
+streamlit run src/ui/streamlit_app.py --server.port=8501 --server.address=0.0.0.0

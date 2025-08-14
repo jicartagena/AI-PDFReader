@@ -26,8 +26,12 @@ wheels/
 venv/
 env/
 ENV/
-.env
 .venv
+
+# Variables de entorno con secretos (permitir .env por defecto)
+.env.local
+.env.production
+.env.secrets
 
 # IDEs
 .vscode/

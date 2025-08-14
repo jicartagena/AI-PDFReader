@@ -36,10 +36,6 @@ class Settings:
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3.2")
 
-    # HuggingFace
-    HUGGINGFACE_API_TOKEN: Optional[str] = os.getenv("HUGGINGFACE_API_TOKEN")
-    HF_MODEL: str = os.getenv("HF_MODEL", "microsoft/DialoGPT-medium")
-
     # Vector Store
     CHROMA_PERSIST_DIRECTORY: str = os.getenv(
         "CHROMA_PERSIST_DIRECTORY", str(CHROMA_DIR)
@@ -75,10 +71,8 @@ class Settings:
         """Validar configuración del LLM seleccionado"""
         if cls.LLM_PROVIDER == "openai":
             return cls.OPENAI_API_KEY is not None
-        elif cls.LLM_PROVIDER == "huggingface":
-            return cls.HUGGINGFACE_API_TOKEN is not None
         elif cls.LLM_PROVIDER == "ollama":
-            return True  # Ollama no requiere API key
+            return True
         return False
 
     @classmethod
@@ -96,15 +90,9 @@ class Settings:
                 "base_url": cls.OLLAMA_BASE_URL,
                 "model": cls.OLLAMA_MODEL,
             }
-        elif cls.LLM_PROVIDER == "huggingface":
-            return {
-                "provider": "huggingface",
-                "api_token": cls.HUGGINGFACE_API_TOKEN,
-                "model": cls.HF_MODEL,
-            }
         else:
             raise ValueError(f"Proveedor LLM no soportado: {cls.LLM_PROVIDER}")
 
 
-# Instancia global de configuración
+# Instancia global de configuración.
 settings = Settings()

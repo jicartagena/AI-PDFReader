@@ -1,13 +1,10 @@
-version: '3.8'
-
 services:
   pdf-copilot:
     build:
       context: .
       dockerfile: docker/Dockerfile
     ports:
-      - "8501:8501"  # Streamlit
-      - "8000:8000"  # FastAPI
+      - "8501:8501"
     volumes:
       - ./data:/app/data
       - ./src:/app/src
@@ -33,21 +30,8 @@ services:
     networks:
       - pdf-copilot-network
 
-  # Opcional: ChromaDB standalone
-  chromadb:
-    image: chromadb/chroma:latest
-    ports:
-      - "8001:8000"
-    volumes:
-      - chroma_data:/chroma/chroma
-    environment:
-      - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.basic_authn.BasicAuthenticationServerProvider
-    networks:
-      - pdf-copilot-network
-
 volumes:
   ollama_data:
-  chroma_data:
 
 networks:
   pdf-copilot-network:

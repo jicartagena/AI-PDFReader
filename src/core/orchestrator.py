@@ -1,5 +1,5 @@
 """
-Orquestador principal del sistema - coordina flujos conversacionales
+Orquestador principal del sistema
 """
 
 import logging
@@ -297,7 +297,7 @@ class ConversationOrchestrator:
     ) -> Dict[str, Any]:
         """Manejar solicitud de resumen"""
         # Usar agente de resumen especializado
-        from ..agents.summarizer import DocumentSummarizer
+        from agents.summarizer import DocumentSummarizer
 
         summarizer = DocumentSummarizer()
 
@@ -305,7 +305,16 @@ class ConversationOrchestrator:
             # Resumen de todos los documentos
             all_docs = []
             for file_info in self.processed_files:
-                all_docs.extend([chunk.page_content for chunk in file_info["chunks"]])
+                # Manejar objetos Document correctamente
+                for chunk in file_info["chunks"]:
+                    if hasattr(chunk, "page_content"):
+                        all_docs.append(chunk.page_content)
+                    elif isinstance(chunk, dict) and "content" in chunk:
+                        all_docs.append(chunk["content"])
+                    elif isinstance(chunk, dict) and "page_content" in chunk:
+                        all_docs.append(chunk["page_content"])
+                    else:
+                        all_docs.append(str(chunk))
             summary = await summarizer.generate_comprehensive_summary(all_docs)
         else:
             # Resumen del contexto relevante
@@ -324,31 +333,74 @@ class ConversationOrchestrator:
         self, query: str, context_docs: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Manejar solicitud de comparación"""
-        from ..agents.comparator import DocumentComparator
+        try:
+            from agents.comparator import DocumentComparator
 
-        comparator = DocumentComparator()
+            comparator = DocumentComparator()
 
-        # Obtener documentos de diferentes fuentes
-        sources = {}
-        for doc in context_docs:
-            source = doc["metadata"]["source_file"]
-            if source not in sources:
-                sources[source] = []
-            sources[source].append(doc["content"])
+            # usar SIEMPRE todos los archivos procesados
+            all_sources = {}
 
-        comparison = await comparator.compare_documents(sources, query)
+            # Obtener contenido de todos los archivos procesados
+            if self.processed_files and len(self.processed_files) >= 2:
+                for file_info in self.processed_files:
+                    filename = file_info["filename"]
+                    # Tomar una muestra representativa de chunks de cada archivo
+                    chunks_sample = file_info["chunks"][:3]  # Primeros 3 chunks
 
-        return {
-            "content": comparison,
-            "sources": list(sources.keys()),
-            "type": "comparison",
-        }
+                    # Manejar tanto objetos Document como diccionarios
+                    content_list = []
+                    for chunk in chunks_sample:
+                        if hasattr(chunk, "page_content"):
+                            # Es un objeto Document de LangChain
+                            content_list.append(chunk.page_content)
+                        elif isinstance(chunk, dict) and "content" in chunk:
+                            # Es un diccionario con clave 'content'
+                            content_list.append(chunk["content"])
+                        elif isinstance(chunk, dict) and "page_content" in chunk:
+                            # Es un diccionario con clave 'page_content'
+                            content_list.append(chunk["page_content"])
+                        else:
+                            # Último recurso: convertir a string
+                            content_list.append(str(chunk))
+
+                    all_sources[filename] = content_list
+            else:
+                # Fallback: si no hay suficientes archivos procesados, informar al usuario
+                return {
+                    "content": "Para realizar una comparación, necesitas tener al menos 2 documentos cargados. Actualmente tienes {} documento(s) cargado(s).".format(
+                        len(self.processed_files)
+                    ),
+                    "sources": (
+                        [f["filename"] for f in self.processed_files]
+                        if self.processed_files
+                        else []
+                    ),
+                    "type": "comparison",
+                }
+
+            # Realizar comparación
+            comparison = await comparator.compare_documents(all_sources, query)
+
+            return {
+                "content": comparison,
+                "sources": list(all_sources.keys()),
+                "type": "comparison",
+            }
+
+        except Exception as e:
+            logger.error(f"Error en comparación: {e}")
+            return {
+                "content": f"Error al procesar la comparación: {str(e)}",
+                "sources": [],
+                "type": "comparison",
+            }
 
     async def _handle_classification_request(
         self, query: str, context_docs: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Manejar solicitud de clasificación"""
-        from ..agents.classifier import TopicClassifier
+        from agents.classifier import TopicClassifier
 
         classifier = TopicClassifier()
 

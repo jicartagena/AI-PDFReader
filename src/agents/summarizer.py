@@ -6,7 +6,7 @@ import logging
 from typing import List, Dict, Any, Optional
 from abc import ABC, abstractmethod
 
-from ..core.llm_manager import llm_manager
+from core.llm_manager import llm_manager
 
 logger = logging.getLogger(__name__)
 

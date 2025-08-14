@@ -1,5 +1,5 @@
 """
-Gestor de LLMs múltiples con soporte para OpenAI, Ollama y HuggingFace
+Gestor de LLMs múltiples con soporte para OpenAI y Ollama
 """
 
 import logging
@@ -11,7 +11,7 @@ try:
     from langchain_community.llms import Ollama
     from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 except ImportError:
-    # Fallback si LangChain no está disponible
+    # Fallback si LangChain no está disponible.
     logging.warning("LangChain no disponible, usando implementación básica")
 
 from .config import settings
@@ -84,12 +84,12 @@ class OpenAIProvider(BaseLLMProvider):
             return f"Error generando respuesta: {str(e)}"
 
     def is_available(self) -> bool:
-        """Verificar disponibilidad OpenAI"""
+        """Verificar disponibilidad OpenAI."""
         return self.client is not None and self.api_key is not None
 
 
 class OllamaProvider(BaseLLMProvider):
-    """Proveedor Ollama para modelos locales"""
+    """Proveedor Ollama para modelos locales."""
 
     def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama2"):
         self.base_url = base_url
@@ -98,7 +98,7 @@ class OllamaProvider(BaseLLMProvider):
         self._initialize_client()
 
     def _initialize_client(self):
-        """Inicializar cliente Ollama"""
+        """Inicializar cliente Ollama."""
         try:
             import requests
 
@@ -106,28 +106,42 @@ class OllamaProvider(BaseLLMProvider):
             response = requests.get(f"{self.base_url}/api/tags", timeout=5)
             if response.status_code == 200:
                 self.client = requests
-                logger.info("Cliente Ollama inicializado")
+                logger.info("Cliente Ollama inicializado.")
             else:
-                logger.error("Ollama no está corriendo")
+                logger.error("Ollama no está corriendo.")
         except ImportError:
-            logger.error("Requests no está disponible")
+            logger.error("Requests no está disponible.")
         except Exception as e:
             logger.error(f"Error conectando con Ollama: {e}")
 
     def generate_response(self, prompt: str, context: str = "") -> str:
-        """Generar respuesta usando Ollama"""
+        """Generar respuesta usando Ollama."""
         if not self.client:
-            return "Error: Ollama no está disponible"
+            return "Error: Ollama no está disponible."
 
         try:
+            # Limitar el contexto para evitar timeouts
+            if context and len(context) > 3000:
+                context = context[:3000] + "..."
+
             full_prompt = (
                 f"Contexto: {context}\n\nPregunta: {prompt}" if context else prompt
             )
 
-            payload = {"model": self.model, "prompt": full_prompt, "stream": False}
-
+            payload = {
+                "model": self.model,
+                "prompt": full_prompt,
+                "stream": False,
+                "options": {
+                    "num_ctx": 1024,  # Reducir contexto para velocidad
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "num_predict": 256,  # Limitar tokens de respuesta
+                    "repeat_penalty": 1.1,
+                },
+            }
             response = self.client.post(
-                f"{self.base_url}/api/generate", json=payload, timeout=30
+                f"{self.base_url}/api/generate", json=payload, timeout=180
             )
 
             if response.status_code == 200:
@@ -140,68 +154,7 @@ class OllamaProvider(BaseLLMProvider):
             return f"Error generando respuesta: {str(e)}"
 
     def is_available(self) -> bool:
-        """Verificar disponibilidad Ollama"""
-        return self.client is not None
-
-
-class HuggingFaceProvider(BaseLLMProvider):
-    """Proveedor HuggingFace"""
-
-    def __init__(self, api_token: str, model: str = "microsoft/DialoGPT-medium"):
-        self.api_token = api_token
-        self.model = model
-        self.client = None
-        self._initialize_client()
-
-    def _initialize_client(self):
-        """Inicializar cliente HuggingFace"""
-        try:
-            from transformers import pipeline
-            import torch
-
-            # Verificar token
-            if not self.api_token or not self.api_token.strip():
-                logger.warning("Token de HuggingFace no configurado")
-                return
-
-            # Usar GPU si está disponible
-            device = 0 if torch.cuda.is_available() else -1
-
-            self.client = pipeline(
-                "text-generation", model=self.model, device=device, token=self.api_token
-            )
-            logger.info("Cliente HuggingFace inicializado")
-        except ImportError:
-            logger.error("Transformers no está disponible")
-        except Exception as e:
-            logger.error(f"Error inicializando HuggingFace: {e}")
-            self.client = None
-
-    def generate_response(self, prompt: str, context: str = "") -> str:
-        """Generar respuesta usando HuggingFace"""
-        if not self.client:
-            return "Error: HuggingFace no está disponible"
-
-        try:
-            full_prompt = (
-                f"Contexto: {context}\n\nPregunta: {prompt}" if context else prompt
-            )
-
-            response = self.client(
-                full_prompt,
-                max_length=500,
-                num_return_sequences=1,
-                temperature=0.7,
-                do_sample=True,
-            )
-
-            return response[0]["generated_text"][len(full_prompt) :].strip()
-        except Exception as e:
-            logger.error(f"Error generando respuesta HuggingFace: {e}")
-            return f"Error generando respuesta: {str(e)}"
-
-    def is_available(self) -> bool:
-        """Verificar disponibilidad HuggingFace"""
+        """Verificar disponibilidad Ollama."""
         return self.client is not None
 
 
@@ -214,7 +167,7 @@ class LLMManager:
         self._initialize_providers()
 
     def _initialize_providers(self):
-        """Inicializar proveedores disponibles"""
+        """Inicializar proveedores disponibles."""
         # OpenAI
         if settings.OPENAI_API_KEY:
             self.providers["openai"] = OpenAIProvider(
@@ -225,19 +178,6 @@ class LLMManager:
         self.providers["ollama"] = OllamaProvider(
             settings.OLLAMA_BASE_URL, settings.OLLAMA_MODEL
         )
-
-        # HuggingFace - solo si hay token válido
-        hf_token = settings.HUGGINGFACE_API_TOKEN
-        if hf_token and hf_token.strip() and hf_token != "None":
-            try:
-                self.providers["huggingface"] = HuggingFaceProvider(
-                    hf_token, settings.HF_MODEL
-                )
-                logger.info("HuggingFace provider inicializado correctamente")
-            except Exception as e:
-                logger.warning(f"No se pudo inicializar HuggingFace: {e}")
-        else:
-            logger.info("HuggingFace deshabilitado - no hay token configurado")
 
         # Configurar proveedor activo
         self.set_active_provider(settings.LLM_PROVIDER)

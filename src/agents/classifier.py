@@ -8,7 +8,7 @@ from collections import defaultdict, Counter
 import re
 
 from langchain.schema import Document
-from ..core.llm_manager import llm_manager
+from core.llm_manager import llm_manager
 
 logger = logging.getLogger(__name__)
 

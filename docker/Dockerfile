@@ -7,6 +7,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar archivos de requisitos
@@ -22,8 +23,8 @@ COPY .env.example .env
 # Crear directorios necesarios
 RUN mkdir -p data/uploads data/temp data/chroma_db
 
-# Exponer puertos
-EXPOSE 8501 8000
+# Exponer puerto
+EXPOSE 8501
 
 # Script de inicio
 COPY docker/start.sh .
