@@ -4,13 +4,13 @@ Un sistema inteligente de análisis conversacional que permite cargar hasta 5 do
 
 ## Características Principales
 
-- ✅ **Carga múltiple**: Hasta 5 PDFs simultáneamente
-- ✅ **Procesamiento inteligente**: Extracción y vectorización automática del contenido
-- ✅ **Consultas naturales**: Interfaz conversacional intuitiva
-- ✅ **Agentes especializados**: Resumen, comparación y clasificación de documentos
-- ✅ **LLMs múltiples**: Soporte para OpenAI y Ollama (modelos locales)
-- ✅ **Deployment flexible**: Ejecución local y containerizada con Docker
-- ✅ **Optimizado**: Configuraciones de rendimiento y timeout ajustables
+-  **Carga múltiple**: Hasta 5 PDFs simultáneamente
+-  **Procesamiento inteligente**: Extracción y vectorización automática del contenido
+-  **Consultas naturales**: Interfaz conversacional intuitiva
+-  **Agentes especializados**: Resumen, comparación y clasificación de documentos
+-  **LLMs múltiples**: Soporte para OpenAI y Ollama (modelos locales)
+-  **Deployment flexible**: Ejecución local y containerizada con Docker
+-  **Optimizado**: Configuraciones de rendimiento y timeout ajustables
 
 ## Demo Rápido
 
@@ -175,10 +175,10 @@ OLLAMA_MODEL=llama3.2
 
 ### Mejoras de Estabilidad
 
-- ✅ Manejo robusto de errores y timeouts
-- ✅ Validación exhaustiva de archivos PDF
-- ✅ Recuperación automática de conexiones LLM
-- ✅ Limitación inteligente de contexto para evitar sobrecarga
+-  Manejo robusto de errores y timeouts
+-  Validación exhaustiva de archivos PDF
+-  Recuperación automática de conexiones LLM
+-  Limitación inteligente de contexto para evitar sobrecarga
 
 ## Arquitectura y Flujo de Datos
 
@@ -251,7 +251,7 @@ pdf-copilot/
 
 ## Roadmap
 
-### Funcionalidades Planificadas
+### Funcionalidades a Largo Plazo
 - [ ] Soporte para formatos adicionales (DOCX, TXT, EPUB)
 - [ ] Análisis de imágenes y diagramas con modelos multimodales
 - [ ] Sistema de plugins para extensiones personalizadas
@@ -264,25 +264,7 @@ pdf-copilot/
 - [ ] Métricas de rendimiento y analytics
 - [ ] Fine-tuning de modelos específicos del dominio
 
-## Contribuciones
 
-Las contribuciones son bienvenidas. Para contribuir:
-
-1. Fork del repositorio
-2. Crear rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit de cambios (`git commit -am 'Añadir nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Crear Pull Request
-
-## Estado del Proyecto
-
-**✅ Versión de Producción Lista**
-
-- ✅ Todas las funcionalidades principales implementadas
-- ✅ Optimizaciones de rendimiento aplicadas  
-- ✅ Deployment Docker funcional y verificado
-- ✅ Documentación completa y actualizada
-- ✅ Scripts de automatización incluidos
 
 ## Licencia
 
